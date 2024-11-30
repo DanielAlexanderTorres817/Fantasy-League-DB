@@ -62,7 +62,6 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash("Welcome to WasteWise! Please log in.", "success")
         return redirect(url_for("views.login"))
 
     return render_template("register.html")

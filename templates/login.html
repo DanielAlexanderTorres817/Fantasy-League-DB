@@ -67,12 +67,29 @@
         .register-link a:hover {
             text-decoration: underline;
         }
+        .flash-messages {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div class="login-container">
         <h2>Login</h2>
+        <!-- Flash messages for feedback -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
         <form action="/login" method="POST">
             <div class="error-message">
                 <!-- Error messages can be displayed here -->
