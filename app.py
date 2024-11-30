@@ -16,7 +16,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable unnecessary over
 db.init_app(app)
 
 with app.app_context():
-    db.drop_all()
+    # db.drop_all() # testing purposes
     db.create_all()
     print("success!")
 
