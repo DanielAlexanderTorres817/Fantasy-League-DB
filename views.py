@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, db
+from models import User, League, Team, Player, db
 
-
+# note: hash doe not work for xxamp
 
 views =Blueprint(__name__, "views")
 
@@ -67,22 +67,57 @@ def register():
     return render_template("register.html")
 
 
-
 #dashboard
 @views.route("/dashboard")
 def dashboard():
     if "user" in session:  # Check if the user is logged in
         username = session["user"]
-        return render_template("dashboard.html", username=username)
+
+        # Fetch general statistics from the database=
+        team_count = Team.query.count()  # Count of teams
+        league_count = League.query.count()  # Count of leagues
+        player_count = Player.query.count()  # Count of matches
+
+        # Pass the statistics to the template
+        return render_template("dashboard.html",
+                               username=username,
+                               team_count=team_count,
+                               league_count=league_count,
+                               player_count=player_count)
 
     flash("You need to log in to access this page.", "error")
     return redirect(url_for("views.login"))
-    
-    #return render_template("dashboard.html")
+
+
+# Users
+@views.route("/users")
+def users():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+    return render_template("users.html")
+
+
+# League
+@views.route("/league")
+def league():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+    return render_template("league.html")
+
+
+# Teams
+@views.route("/teams")
+def teams():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+    return render_template("teams.html")
 
 
 #logout
-@views.route("\logout")
+@views.route("/logout")
 def logout():
     session.pop("user", None)
     flash("You have been logged out. Have a good day!", "success")
