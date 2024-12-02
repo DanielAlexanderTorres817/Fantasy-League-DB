@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bcrypt import Bcrypt
 from models import User, League, Team, Player, db
 
 # note: hash does not work for xxamp (password length exceed)
+bcrypt = Bcrypt()
 
 views =Blueprint(__name__, "views")
 
@@ -23,8 +25,7 @@ def login():
         user = User.query.filter_by(username = username).first()
 
         #verify the login attempt
-        # if user and check_password_hash(user.password, password):
-        if user and password:
+        if user and bcrypt.check_password_hash(user.password, password):
             session["user"] = username
             return redirect(url_for("views.dashboard"))
 
@@ -58,9 +59,9 @@ def register():
             return redirect(url_for("views.register"))
 
         # Hash the password and save the user
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        # new_user = User(name=name, email=email, username=username, password=hashed_password)
-        new_user = User(name=name, email=email, username=username, password=password)
+        # hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(name=name, email=email, username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
