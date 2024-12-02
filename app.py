@@ -13,8 +13,13 @@ app.secret_key = "super secret key"
 app.register_blueprint(views, url_prefix = "/")
 
 #DATABASE CODE HERE
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"  # SQLite database file
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/database_project' # test xxamp
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"  # SQLite database file
+
+# format
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://<USERNAME>:<PASSWORD>@<HOSTNAME>/<DATABASE>'
+
+# connect to your xxamp here (comment/uncomment out accordingly):
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/database_project' # test xxamp
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable unnecessary overhead
 
 db.init_app(app)

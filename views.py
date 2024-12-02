@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, League, Team, Player, db
 
-# note: hash doe not work for xxamp
+# note: hash does not work for xxamp (password length exceed)
 
 views =Blueprint(__name__, "views")
 
@@ -23,7 +23,8 @@ def login():
         user = User.query.filter_by(username = username).first()
 
         #verify the login attempt
-        if user and check_password_hash(user.password, password):
+        # if user and check_password_hash(user.password, password):
+        if user and password:
             session["user"] = username
             return redirect(url_for("views.dashboard"))
 
@@ -58,7 +59,8 @@ def register():
 
         # Hash the password and save the user
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        new_user = User(name=name, email=email, username=username, password=hashed_password)
+        # new_user = User(name=name, email=email, username=username, password=hashed_password)
+        new_user = User(name=name, email=email, username=username, password=password)
         db.session.add(new_user)
         db.session.commit()
 
