@@ -5,12 +5,21 @@ import random
 db = SQLAlchemy()
 
 # Example User Model
-def generate_unique_id():
+def generate_unique_user_id():
     """Generate a unique 8-digit numeric ID."""
     while True:
         new_id = random.randint(10000000, 99999999)
         if not User.query.filter_by(id=new_id).first():  # Check if it's unique
             return new_id
+
+
+def generate_unique_team_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not Team.query.filter_by(Team_ID=new_id).first():  # Check if it's unique
+            return new_id
+
 
 class User(db.Model):
     """Users Table"""
@@ -24,7 +33,7 @@ class User(db.Model):
 
     # for xxamp, note: change User.id to User.User_ID in League and Team
     __tablename__ = 'Users'
-    id = db.Column('User_ID', db.Numeric(8, 0), primary_key=True, default=generate_unique_id)
+    id = db.Column('User_ID', db.Numeric(8, 0), primary_key=True, default=generate_unique_user_id)
     name = db.Column('FullName', db.String(50))
     email = db.Column('Email', db.String(50), nullable=False, unique=True)
     username = db.Column('Username', db.String(20), nullable=False, unique=True)
@@ -56,7 +65,7 @@ class League(db.Model):
 class Team(db.Model):
     """Teams Table"""
     __tablename__ = 'Teams'
-    Team_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Team_ID = db.Column(db.Numeric(8, 0), primary_key=True, default=generate_unique_team_id)
     TeamName = db.Column(db.String(25), nullable=False)
     Owner = db.Column(db.Numeric(8, 0), db.ForeignKey('Users.User_ID'))
     League_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Leagues.League_ID'))

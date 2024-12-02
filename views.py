@@ -31,7 +31,7 @@ def login():
 
         flash("Invalid username or password!", "error")
         return redirect(url_for("views.login"))
-         
+
     return render_template("login.html")
 
 
@@ -111,12 +111,100 @@ def league():
 
 
 # Teams
-@views.route("/teams")
+@views.route("/teams", methods=["GET", "POST"])
 def teams():
     if "user" not in session:
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
-    return render_template("teams.html")
+
+    # Handle adding a new team
+    if request.method == "POST":
+        team_name = request.form.get("team_name")
+        owner = request.form.get("owner")
+        league_id = request.form.get("league_id")
+        total_points = request.form.get("points")
+        ranking = request.form.get("ranking")
+        status_value = request.form.get("status")
+
+        # Convert the checkbox value to 'a' for active or 'i' for inactive
+        if status_value == 'on':
+            status = 'A'
+        else:
+            status = 'I'
+
+        if not team_name or not owner or not league_id:
+            flash("Team Name, Owner, and League ID are required.", "error")
+            return redirect(url_for("views.teams"))
+
+        new_team = Team(
+            TeamName=team_name,
+            Owner=owner,
+            League_ID=league_id,
+            TotalPoints=total_points,
+            Ranking=ranking,
+            Status=status,
+        )
+        db.session.add(new_team)
+        db.session.commit()
+        flash("Team added successfully!", "success")
+        return redirect(url_for("views.teams"))
+
+    # Search/Filter Teams
+    search_query = request.args.get('search', '').strip()
+
+    #  filter teams by name
+    if search_query:
+        teams = Team.query.filter(Team.TeamName.ilike(f'%{search_query}%')).all()
+    else:
+        teams = Team.query.all()  # No search, return all teams
+
+    return render_template('teams.html', teams=teams)
+
+@views.route("/teams/edit", methods=["POST"])
+def edit_team():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    # Handle editing the team
+    team_id = request.form.get("team_id")
+    team_name = request.form.get("team_name")
+    owner = request.form.get("owner")
+    league_id = request.form.get("league_id")
+    total_points = request.form.get("points")
+    ranking = request.form.get("ranking")
+    status_value = request.form.get("status")  # Expect either 'A' or 'I'
+
+    if status_value == 'A':
+        status = 'A'
+    else:
+        status = 'I'
+
+    team = Team.query.get_or_404(team_id)
+    team.TeamName = team_name
+    team.Owner = owner
+    team.League_ID = league_id
+    team.TotalPoints = total_points
+    team.Ranking = ranking
+    team.Status = status
+
+    db.session.commit()
+    flash("Team updated successfully!", "success")
+    return redirect(url_for("views.teams"))
+
+
+
+@views.route("/teams/delete/<int:id>", methods=["POST"])
+def delete_team(id):
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    team = Team.query.get_or_404(id)
+    db.session.delete(team)
+    db.session.commit()
+    flash("Team deleted successfully!", "success")
+    return redirect(url_for("views.teams"))
 
 
 #logout

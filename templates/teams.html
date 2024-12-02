@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0; padding: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin-top: 5px; width: calc(100% - 20px); border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .edit-form, .add-form { display: none; background: #f4f4f4; padding: 15px; margin-top: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h2>Teams</h2>
+
+    <!-- Add Team Button -->
+    <button type="button" onclick="showAddForm()">Add Team</button>
+
+    <!-- Add Team Form -->
+    <div id="add-form" class="add-form">
+        <form method="POST" action="{{ url_for('views.teams') }}">
+            <!-- Form fields for team details -->
+            <input type="text" name="team_name" placeholder="Team Name">
+            <input type="text" name="owner" placeholder="Owner">
+            <input type="text" name="league_id" placeholder="League ID">
+            <input type="number" name="points" placeholder="Points">
+            <input type="number" name="ranking" placeholder="Ranking">
+            <label for="status">Status</label>
+            <input type="checkbox" name="status"> Active
+            <button type="submit">Add Team</button>
+        </form>
+    </div>
+
+    <form method="GET" action="/teams">
+        <input type="text" name="search" placeholder="Search by team name" value="{{ request.args.get('search', '') }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Owner</th>
+                <th>League ID</th>
+                <th>Points</th>
+                <th>Ranking</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr>
+                <td>{{ team.Team_ID }}</td>
+                <td>{{ team.TeamName }}</td>
+                <td>{{ team.Owner }}</td>
+                <td>{{ team.League_ID }}</td>
+                <td>{{ team.TotalPoints }}</td>
+                <td>{{ team.Ranking }}</td>
+                <td>
+                    {% if team.Status == 'A' %}
+                        Active
+                    {% else %}
+                        Inactive
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" onclick="showEditForm('{{ team.Team_ID }}')">Edit</button>
+                </td>
+                <td>
+                    <form action="{{ url_for('views.delete_team', id=team.Team_ID) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+
+                <tr id="edit-form-{{ team.Team_ID }}" class="edit-form">
+                    <td colspan="8">
+                        <form method="POST" action="/teams/edit">
+                            <input type="hidden" name="team_id" value="{{ team.Team_ID }}">
+                            <label for="team_name_{{ team.Team_ID }}">Name:</label>
+                            <input type="text" id="team_name_{{ team.Team_ID }}" name="team_name" value="{{ team.TeamName }}" required>
+
+                            <label for="owner_{{ team.Team_ID }}">Owner:</label>
+                            <input type="number" id="owner_{{ team.Team_ID }}" name="owner" value="{{ team.Owner }}" required>
+
+                            <label for="league_id_{{ team.Team_ID }}">League ID:</label>
+                            <input type="number" id="league_id_{{ team.Team_ID }}" name="league_id" value="{{ team.League_ID }}" required>
+
+                            <label for="points_{{ team.Team_ID }}">Points:</label>
+                            <input type="number" id="points_{{ team.Team_ID }}" name="points" value="{{ team.TotalPoints }}" required>
+
+                            <label for="ranking_{{ team.Team_ID }}">Ranking:</label>
+                            <input type="number" id="ranking_{{ team.Team_ID }}" name="ranking" value="{{ team.Ranking }}" required>
+
+                            <label for="status_A_{{ team.Team_ID }}">Active:</label>
+                            <input type="radio" id="status_A_{{ team.Team_ID }}" name="status" value="A" {% if team.Status == 'A' %}checked{% endif %} />
+                            <label for="status_I_{{ team.Team_ID }}">Inactive:</label>
+                            <input type="radio" id="status_I_{{ team.Team_ID }}" name="status" value="I" {% if team.Status == 'I' %}checked{% endif %} />
+
+                            <button type="submit">Save</button>
+                            <button type="button" onclick="hideEditForm('{{ team.Team_ID }}')">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;">No teams found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function showEditForm(teamId) {
+            document.getElementById(`edit-form-${teamId}`).style.display = 'table-row';
+        }
+        function hideEditForm(teamId) {
+            document.getElementById(`edit-form-${teamId}`).style.display = 'none';
+        }
+
+        // Show Add Team form
+        function showAddForm() {
+            document.getElementById('add-form').style.display = 'block';
+        }
+
+        // Hide Add Team form
+        function hideAddForm() {
+            document.getElementById('add-form').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
