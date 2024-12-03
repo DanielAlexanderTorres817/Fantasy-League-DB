@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waivers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0; padding: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin-top: 5px; width: calc(100% - 20px); border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .add-form { display: none; background: #f4f4f4; padding: 15px; margin-top: 10px; border: 1px solid #ddd; }
+        .flash-messages {color: red; font-size: 14px; margin-bottom: 20px; }
+        .flash-messages.success { color: green; }
+        .flash-messages ul { list-style-type: none; padding: 0; }
+        .flash-messages li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Waivers</h2>
+
+    <!-- Flash Message Section -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add Waiver Button -->
+    <button type="button" onclick="showAddForm()">Add Waiver</button>
+
+    <!-- Add Waiver Form -->
+    <div id="add-form" class="add-form">
+        <form method="POST" action="{{ url_for('views.waivers') }}">
+            <!-- Form fields for waiver details -->
+            <input type="text" name="team_id" placeholder="Team ID">
+            <input type="text" name="player_id" placeholder="Player ID">
+            <input type="number" name="waiver_order" placeholder="Waiver Order">
+            <label for="waiver_status">Waiver Status</label>
+            <input type="checkbox" name="waiver_status"> Approved
+            <button type="submit">Add Waiver</button>
+        </form>
+    </div>
+
+    <form method="GET" action="/waivers">
+        <input type="text" name="search" placeholder="Search by player name" value="{{ search_query }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Waiver ID</th>
+                <th>Team Name</th>
+                <th>Player Name</th>
+                <th>Waiver Order</th>
+                <th>Waiver Status</th>
+                <th>Waiver Pickup Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for waiver in waivers %}
+            <tr>
+                <td>{{ waiver.Waiver_ID }}</td>
+                <td>{{ waiver.team.TeamName }}</td>
+                <td>{{ waiver.player.FullName }}</td>
+                <td>{{ waiver.WaiverOrder }}</td>
+                <td>
+                    {% if waiver.WaiverStatus == 'A' %}
+                        Approved
+                    {% else %}
+                        Pending
+                    {% endif %}
+                </td>
+                <td>{{ waiver.WaiverPickupDate }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;">No waivers found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        // Show Add Waiver form
+        function showAddForm() {
+            document.getElementById('add-form').style.display = 'block';
+        }
+
+        // Hide Add Waiver form
+        function hideAddForm() {
+            document.getElementById('add-form').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
