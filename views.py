@@ -643,14 +643,16 @@ def matches():
             flash("Invalid Team IDs.", "error")
             return redirect(url_for('views.matches'))
 
-        
+        if (score_team1 > score_team2):
+            winning = team1_id
+        else:
+            winning = team2_id
         new_match = Match(
             Team1_ID=team1_id,
             Team2_ID=team2_id,
             MatchDate=match_date,
-            ScoreTeam1=score_team1,
-            ScoreTeam2=score_team2,
-            Status=status
+            FinalScore=str(score_team1) + "-" + str(score_team2),
+            Winner=winning
         )
         db.session.add(new_match)
         db.session.commit()

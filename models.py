@@ -48,6 +48,34 @@ def generate_unique_waiver_id():
         if not Waiver.query.filter_by(Waiver_ID=new_id).first():  # Check if it's unique
             return new_id
 
+def generate_unique_league_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not League.query.filter_by(League_ID=new_id).first():  # Check if it's unique
+            return new_id
+
+def generate_unique_match_event_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not MatchEvent.query.filter_by(Match_Event_ID=new_id).first():  # Check if it's unique
+            return new_id
+
+def generate_unique_match_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not Match.query.filter_by(Match_ID=new_id).first():  # Check if it's unique
+            return new_id
+
+def generate_unique_trade_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not Trade.query.filter_by(Trade_ID=new_id).first():  # Check if it's unique
+            return new_id
+
 
 class User(db.Model):
     """Users Table"""
@@ -74,7 +102,8 @@ class User(db.Model):
 class League(db.Model):
     """Leagues Table"""
     __tablename__ = 'Leagues'
-    League_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    League_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_league_id)
     LeagueName = db.Column(db.String(30), nullable=False)
     LeagueType = db.Column(db.String(1), nullable=False, default='U')
     Commissioner = db.Column(db.Numeric(8, 0), db.ForeignKey('Users.User_ID'))
@@ -214,7 +243,8 @@ class Trade(db.Model):
     __tablename__ = 'Trades'
 
     # Columns
-    Trade_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True)
+    Trade_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_trade_id)
     Team1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'), nullable=False)
     Team2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'), nullable=False)
     TradedPlayer1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=False)
@@ -232,7 +262,8 @@ class Match(db.Model):
     """Matches Table"""
     __tablename__ = 'Matches'
 
-    Match_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Match_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_match_id)
     Team1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
     Team2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
     MatchDate = db.Column(db.Date, nullable=False)
@@ -252,7 +283,8 @@ class MatchEvent(db.Model):
     """Match Events Table"""
     __tablename__ = 'match_events'
 
-    Match_Event_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Match_Event_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_match_event_id)
     Match_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Matches.Match_ID'), nullable=False)
     Player1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'))
     Player2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=True)  # Nullable for solo events
