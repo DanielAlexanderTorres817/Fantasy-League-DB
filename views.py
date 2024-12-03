@@ -80,13 +80,15 @@ def dashboard():
         team_count = Team.query.count()  # Count of teams
         league_count = League.query.count()  # Count of leagues
         player_count = Player.query.count()  # Count of matches
+        user = User.query.filter_by(username=username).first()
 
         # Pass the statistics to the template
         return render_template("dashboard.html",
                                username=username,
                                team_count=team_count,
                                league_count=league_count,
-                               player_count=player_count)
+                               player_count=player_count,
+                               role=user.role)
 
     flash("You need to log in to access this page.", "error")
     return redirect(url_for("views.login"))
@@ -166,7 +168,7 @@ def league():
         new_league = League(
             LeagueName=league_name,
             LeagueType=league_type,
-            Commissioner=comm.id,
+            Commissioner=comm.User_ID,
             MaxTeams=max_teams,
             DraftDate=draft_date,
         )
@@ -200,7 +202,7 @@ def edit_league():
     league = League.query.get_or_404(league_id)
 
     # only owner can edit team
-    if league.Commissioner != comm.id:
+    if league.Commissioner != comm.User_ID:
         flash("You do not have permission to edit this league. \n No changes saved.", "error")
         return redirect(url_for("views.league"))
 
@@ -241,32 +243,41 @@ def delete_league(id):
 # Teams
 @views.route("/teams", methods=["GET", "POST"])
 def teams():
+    # Check if the user is logged in
     if "user" not in session:
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
 
+    # Get the current user from the session
     owner = User.query.filter_by(username=session["user"]).first()
+    if not owner:
+        flash("User not found.", "error")
+        return redirect(url_for("views.login"))
 
-    # Handle adding a new team
+    # Handle adding a new team (only for ADMIN users)
     if request.method == "POST":
+        if owner.role != "ADMIN":
+            flash("You do not have permission to perform this action.", "error")
+            return redirect(url_for("views.teams"))
+
+        # Get form data
         team_name = request.form.get("team_name")
         league_id = request.form.get("league_id")
         total_points = request.form.get("points")
         status_value = request.form.get("status")
 
-        # Convert the checkbox value to 'a' for active or 'i' for inactive
-        if status_value == 'on':
-            status = 'A'
-        else:
-            status = 'I'
+       
+        status = "A" if status_value == "on" else "I"
 
+        # Validate required fields
         if not team_name or not league_id:
-            flash("Team Name, and League ID are required.", "error")
+            flash("Team Name and League ID are required.", "error")
             return redirect(url_for("views.teams"))
 
+        # Create and add a new team
         new_team = Team(
             TeamName=team_name,
-            Owner=owner.id,
+            Owner=owner.User_ID,
             League_ID=league_id,
             TotalPoints=total_points,
             Status=status,
@@ -277,16 +288,16 @@ def teams():
         flash("Team added successfully!", "success")
         return redirect(url_for("views.teams"))
 
-    # Search/Filter Teams
-    search_query = request.args.get('search', '').strip()
-
-    #  filter teams by name
+    
+    search_query = request.args.get("search", "").strip()
     if search_query:
-        teams = Team.query.filter(Team.TeamName.ilike(f'%{search_query}%')).all()
+        teams = Team.query.filter(Team.TeamName.ilike(f"%{search_query}%")).all()
     else:
         teams = Team.query.all()  # No search, return all teams
 
-    return render_template('teams.html', teams=teams)
+    # Render the teams template with role-based access
+    return render_template("teams.html", teams=teams, role=owner.role)
+
 
 
 @views.route("/teams/edit", methods=["POST"])
@@ -302,9 +313,9 @@ def edit_team():
     team = Team.query.get_or_404(team_id)
 
     # only owner can edit team
-    if team.Owner != owner.id:
-        flash("You do not have permission to edit this team. \n No changes saved.", "error")
-        return redirect(url_for("views.teams"))
+    #if team.Owner != owner.User_ID or owner.role == "USER":
+    #flash("You do not have permission to edit this team. \n No changes saved.", "error")
+    #return redirect(url_for("views.teams"))
 
     team_name = request.form.get("team_name")
     league_id = request.form.get("league_id")
@@ -318,7 +329,7 @@ def edit_team():
 
     team = Team.query.get_or_404(team_id)
     team.TeamName = team_name
-    team.Owner = owner.id
+    team.Owner = owner.User_ID
     team.League_ID = league_id
     team.TotalPoints = total_points
     team.Status = status
@@ -410,7 +421,7 @@ def edit_player():
         player = Player.query.get_or_404(player_id)
 
         owner = User.query.filter_by(username=session["user"]).first()
-        owned_teams = Team.query.filter_by(Owner=owner.id).all()
+        owned_teams = Team.query.filter_by(Owner=owner.User_ID).all()
 
         # Check if the player's team is one that the user owns
         if player.Team_ID not in [team.Team_ID for team in owned_teams]:
