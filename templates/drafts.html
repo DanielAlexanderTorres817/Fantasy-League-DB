@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drafts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0; padding: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin-top: 5px; width: calc(100% - 20px); border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .flash-messages {color: red; font-size: 14px; margin-bottom: 20px; }
+        .flash-messages.success { color: green; }
+        .flash-messages ul { list-style-type: none; padding: 0; }
+        .flash-messages li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Drafts</h2>
+
+    <!-- Flash Message Section -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET" action="/drafts">
+        <input type="text" name="search" placeholder="Search by league name" value="{{ search_query }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Draft ID</th>
+                <th>League Name</th>
+                <th>Draft Date</th>
+                <th>Draft Order</th>
+                <th>Draft Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for draft in drafts %}
+            <tr>
+                <td>{{ draft.Draft_ID }}</td>
+                <td>{{ draft.league.LeagueName }}</td>
+                <td>{{ draft.DraftDate }}</td>
+                <td>
+                    {% if draft.DraftOrder == 'R' %}
+                        Round-Robin
+                    {% else %}
+                        Snake
+                    {% endif %}
+                </td>
+                <td>
+                    {% if draft.DraftStatus == 'C' %}
+                        Completed
+                    {% else %}
+                        In Progress
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" onclick="showPlayerForm('{{ draft.Draft_ID }}')">Show Players</button>
+                </td>
+
+                <tr id="player-form-{{ draft.Draft_ID }}" class="edit-form">
+                    {% for player in players %}
+                    <td colspan="8">
+                        <form method="GET" action="/drafts/players">
+                            <input type="hidden" name="draft_id" value="{{ draft.Draft_ID }}">
+                            <input type="text" id="draftPlayers_{{ draft.Draft_ID }}" name="draft_player_list" value="{{ player.FullName }}">
+                            <button type="button" onclick="hidePlayerForm('{{ draft.Draft_ID }}')">Close</button>
+                        </form>
+                    </td>
+                    {% else %}
+                        <td colspan="5" style="text-align:center;">No draft players found</td>
+                    {% endfor %}
+                </tr>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;">No drafts found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function showPlayerForm(draftID) {
+            document.getElementById(`player-form-${draftId}`).style.display = 'block';
+        }
+        function hidePlayerForm(draftId) {
+            document.getElementById(`player-form-${draftId}`).style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>

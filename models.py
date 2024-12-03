@@ -28,10 +28,17 @@ def generate_unique_player_id():
             return new_id
 
 def generate_unique_player_stat_id():
+    """Generate a unique 10-digit numeric ID."""
+    while True:
+        new_id = random.randint(1000000000, 9999999999)
+        if not PlayerStatistics.query.filter_by(Statistic_ID=new_id).first():  # Check if it's unique
+            return new_id
+
+def generate_unique_draft_id():
     """Generate a unique 8-digit numeric ID."""
     while True:
         new_id = random.randint(10000000, 99999999)
-        if not PlayerStatistics.query.filter_by(Statistic_ID=new_id).first():  # Check if it's unique
+        if not Draft.query.filter_by(Draft_ID=new_id).first():  # Check if it's unique
             return new_id
 
 
@@ -157,3 +164,36 @@ class PlayerStatistics(db.Model):
     __table_args__ = (
         db.CheckConstraint("InjuryStatus IN ('Y', 'N')"),
     )
+
+class Draft(db.Model):
+    """Drafts Table"""
+    __tablename__ = 'Drafts'
+
+    # Columns
+    Draft_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_draft_id)
+    League_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Leagues.League_ID'), nullable=False)
+    DraftDate = db.Column(db.Date, nullable=False)
+    DraftOrder = db.Column(db.String(1), nullable=True)
+    DraftStatus = db.Column(db.String(1), default='I', nullable=False)
+
+    # Relationships
+    league = db.relationship('League', backref='drafts', lazy=True)
+
+    # Constraints
+    __table_args__ = (
+        db.CheckConstraint("DraftOrder IN ('R', 'S')"),
+        db.CheckConstraint("DraftStatus IN ('I', 'C')"),
+    )
+
+class Draft_Players(db.Model):
+    """Draft Players Table"""
+    __tablename__ = 'Draft_Players'
+
+    # Columns
+    Draft_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Drafts.Draft_ID'), primary_key=True, nullable=False)
+    Player_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), primary_key=True, nullable=False)
+
+    # Relationships
+    draft = db.relationship('Draft', backref='draft_players', lazy=True)
+    player = db.relationship('Player', backref='draft_players', lazy=True)

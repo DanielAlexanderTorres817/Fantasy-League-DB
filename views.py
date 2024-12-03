@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
-from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players
 
 bcrypt = Bcrypt()
 
@@ -439,6 +439,43 @@ def player_stats():
         stats = PlayerStatistics.query.all()
 
     return render_template("player_stats.html", stats=stats, search_query=search_query)
+
+
+@views.route("/drafts")
+def drafts():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    search_query = request.args.get("search", "")
+    if search_query:
+        drafts = Draft.query.join(League).filter(
+            Draft.League_ID == League.League_ID
+        ).filter(
+            League.LeagueName.ilike(f"%{search_query}%")
+        ).all()
+    else:
+        drafts = Draft.query.all()
+
+    return render_template("drafts.html", drafts=drafts, search_query=search_query)
+
+
+# Route to handle getting players in a draft
+@views.route('/drafts/players', methods=['GET'])
+def draft_player():
+    draft_id = request.form.get('draft_id')  # Get draft_id from the form
+
+    if draft_id:
+        players = Player.query.join(Draft_Players).filter(
+            Player.Player_ID == Draft_Players.Player_ID
+        ).filter(
+            Draft_Players.Draft_ID == draft_id
+        ).all()
+    else:
+        flash('Draft not found!', 'danger')
+        return redirect(url_for('views.drafts'))
+
+    return render_template('draft_players.html', players=players)
 
 
 #logout
