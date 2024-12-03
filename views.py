@@ -707,9 +707,6 @@ def delete_match(id):
     return redirect(url_for("views.matches"))
 
 
-
-
-
 def roles_required(*roles):
     def decorator(func):
         @wraps(func)
@@ -744,6 +741,7 @@ def waivers():
             return redirect(url_for("views.waivers"))
 
         league_id = request.form.get("league_id")
+        player_id = request.form.get("player_id")
         waiver_order = request.form.get("waiver_order")
         status_value = request.form.get("waiver_status")
 
@@ -753,13 +751,13 @@ def waivers():
         else:
             waiver_status = 'P'
 
-        if not team_id or not league_id:
-            flash("Team ID, and League ID are required.", "error")
+        if not team_id or not player_id:
+            flash("Team ID, and Player ID are required.", "error")
             return redirect(url_for("views.waivers"))
 
         new_waiver = Waiver(
             Team_ID=team_id,
-            League_ID=league_id,
+            Player_ID=player_id,
             WaiverOrder=waiver_order,
             WaiverStatus = waiver_status,
         )
