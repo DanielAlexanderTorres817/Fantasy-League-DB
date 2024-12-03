@@ -35,7 +35,6 @@ def login():
 
 
 
-
 #registration
 @views.route("/register", methods=["GET", "POST"])
 def register():
@@ -92,12 +91,48 @@ def dashboard():
 
 
 # Users
-@views.route("/users")
+@views.route('/users', methods=['GET', 'POST'])
 def users():
     if "user" not in session:
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
-    return render_template("users.html")
+    user = User.query.filter_by(username=session["user"]).first()
+    return render_template('users.html', user=user)
+
+
+@views.route("/users/edit", methods=["POST"])
+def edit_user():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    user_id = request.form.get("user_id")
+    user = User.query.get_or_404(user_id)
+
+    full_name = request.form.get("full_name")
+    email = request.form.get("email")
+    profile_settings = request.form.get("profile_settings")
+    password = request.form.get("password")  # Password is optional
+
+    # Check if required fields are filled
+    if not email:
+        flash("email required.", "error")
+        return render_template('users.html', user=user)
+
+    # Update user information
+    user.name = full_name
+    user.email = email
+    user.profile_settings = profile_settings
+
+    # Only update the password if a new one is provided
+    if password:
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        user.password = hashed_password
+
+    # Commit changes to the database
+    db.session.commit()
+    flash("User updated successfully!")
+    return redirect(url_for("views.users"))
 
 
 # League
