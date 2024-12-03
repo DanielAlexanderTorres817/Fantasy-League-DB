@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leagues</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0; padding: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin-top: 5px; width: calc(100% - 20px); border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .edit-form, .add-form { display: none; background: #f4f4f4; padding: 15px; margin-top: 10px; border: 1px solid #ddd; }
+        .flash-messages {color: red; font-size: 14px; margin-bottom: 20px; }
+        .flash-messages.success { color: green; }
+        .flash-messages ul { list-style-type: none; padding: 0; }
+        .flash-messages li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Leagues</h2>
+
+    <!-- Flash Message Section -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add League Button -->
+    <button type="button" onclick="showAddForm()">Add League</button>
+
+    <!-- Add League Form -->
+    <div id="add-form" class="add-form">
+        <form method="POST" action="{{ url_for('views.league') }}">
+            <!-- Form fields for league details -->
+            <input type="text" name="league_name" placeholder="League Name">
+            <label for="league_type">League Type</label>
+            <input type="checkbox" name="league_type"> Public
+            <input type="number" name="max_teams" placeholder="Max Teams">
+            <label for="draft_date">Draft Date</label>
+            <input type="date" name="draft_date" placeholder="Draft Date">
+            <button type="submit">Add League</button>
+        </form>
+    </div>
+
+    <form method="GET" action="/league">
+        <input type="text" name="search" placeholder="Search by league name" value="{{ request.args.get('search', '') }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Commissioner</th>
+                <th>Max Teams</th>
+                <th>Draft Date</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for league in leagues %}
+            <tr>
+                <td>{{ league.League_ID }}</td>
+                <td>{{ league.LeagueName }}</td>
+                <td>
+                    {% if league.LeagueType == 'P' %}
+                        Public
+                    {% else %}
+                        Private
+                    {% endif %}
+                </td>
+                <td>{{ league.Commissioner }}</td>
+                <td>{{ league.MaxTeams }}</td>
+                <td>{{ league.DraftDate }}</td>
+                <td>
+                    <button type="button" onclick="showEditForm('{{ league.League_ID }}')">Edit</button>
+                </td>
+                <td>
+                    <form action="{{ url_for('views.delete_league', id=league.League_ID) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+
+                <tr id="edit-form-{{ league.League_ID }}" class="edit-form">
+                    <td colspan="8">
+                        <form method="POST" action="/league/edit">
+                            <input type="hidden" name="league_id" value="{{ league.League_ID }}">
+                            <label for="league_name_{{ league.League_ID }}">Name:</label>
+                            <input type="text" id="league_name_{{ league.League_ID }}" name="league_name" value="{{ league.LeagueName }}" required>
+
+                            <label for="league_type_P_{{ league.League_ID }}">Public:</label>
+                            <input type="radio" id="league_type_P_{{ league.League_ID }}" name="league_type" value="P" {% if league.LeagueType == 'P' %}checked{% endif %} />
+                            <label for="league_type_R_{{ league.League_ID }}">Private:</label>
+                            <input type="radio" id="league_type_R_{{ league.League_ID }}" name="league_type" value="R" {% if league.LeagueType == 'R' %}checked{% endif %} />
+
+                            <label for="max_teams_{{ league.League_ID }}">Max Teams:</label>
+                            <input type="number" id="max_teams_{{ league.League_ID }}" name="max_teams" value="{{ league.MaxTeams }}" required>
+
+                            <label for="draft_date_{{ league.League_ID }}">Draft Date:</label>
+                            <input type="date" id="draft_date_{{ league.League_ID }}" name="draft_date" value="{{ league.DraftDate }}" required>
+
+                            <button type="submit">Save</button>
+                            <button type="button" onclick="hideEditForm('{{ league.League_ID }}')">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;">No leagues found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function showEditForm(leagueId) {
+            document.getElementById(`edit-form-${leagueId}`).style.display = 'table-row';
+        }
+        function hideEditForm(leagueId) {
+            document.getElementById(`edit-form-${leagueId}`).style.display = 'none';
+        }
+
+        // Show Add League form
+        function showAddForm() {
+            document.getElementById('add-form').style.display = 'block';
+        }
+
+        // Hide Add League form
+        function hideAddForm() {
+            document.getElementById('add-form').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>

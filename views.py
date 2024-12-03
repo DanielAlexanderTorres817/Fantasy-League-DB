@@ -101,12 +101,104 @@ def users():
 
 
 # League
-@views.route("/league")
+@views.route("/league", methods=["GET", "POST"])
 def league():
     if "user" not in session:
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
-    return render_template("league.html")
+
+    comm = User.query.filter_by(username=session["user"]).first()
+
+    # Handle adding a new league
+    if request.method == "POST":
+        league_name = request.form.get("league_name")
+        league_type = request.form.get("league_type")
+        max_teams = request.form.get("max_teams")
+        draft_date = request.form.get("draft_date")
+
+        # Convert the checkbox value to 'a' for active or 'i' for inactive
+        if league_type == 'on':
+            league_type = 'P'
+        else:
+            league_type = 'R'
+
+        if not league_name:
+            flash("League Name is required.", "error")
+            return redirect(url_for("views.league"))
+
+        new_league = League(
+            LeagueName=league_name,
+            LeagueType=league_type,
+            Commissioner=comm.id,
+            MaxTeams=max_teams,
+            DraftDate=draft_date,
+        )
+        db.session.add(new_league)
+        db.session.commit()
+        flash("League added successfully!", "success")
+        return redirect(url_for("views.league"))
+
+    # Search/Filter Teams
+    search_query = request.args.get('search', '').strip()
+
+    #  filter teams by name
+    if search_query:
+        leagues = League.query.filter(League.LeagueName.ilike(f'%{search_query}%')).all()
+    else:
+        leagues = League.query.all()  # No search, return all teams
+
+    return render_template('leagues.html', leagues=leagues)
+
+
+@views.route("/league/edit", methods=["POST"])
+def edit_league():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    comm = User.query.filter_by(username=session["user"]).first()
+
+    # Handle editing the team
+    league_id = request.form.get("league_id")
+    league = League.query.get_or_404(league_id)
+
+    # only owner can edit team
+    if league.Commissioner != comm.id:
+        flash("You do not have permission to edit this league. \n No changes saved.", "error")
+        return redirect(url_for("views.league"))
+
+    league_name = request.form.get("league_name")
+    league_type = request.form.get("league_type")  # Expect either 'P' or 'R' (check or not)
+    max_teams = request.form.get("max_teams")
+    draft_date = request.form.get("draft_date")
+
+    if league_type == 'P':
+        new_league_type = 'P'
+    else:
+        new_league_type = 'R'
+
+    league.LeagueName = league_name
+    league.LeagueType = new_league_type
+    league.MaxTeams = max_teams
+    league.DraftDate = draft_date
+
+    db.session.commit()
+    flash("League updated successfully!", "success")
+    return redirect(url_for("views.league"))
+
+
+@views.route("/league/delete/<int:id>", methods=["POST"])
+def delete_league(id):
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    league = League.query.get_or_404(id)
+    db.session.delete(league)
+    db.session.commit()
+
+    flash("League deleted successfully!", "success")
+    return redirect(url_for("views.league"))
 
 
 # Teams
