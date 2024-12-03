@@ -2,9 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 
-from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players
-
-from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players, Trade
 from functools import wraps
 
 
@@ -524,6 +522,58 @@ def logout():
     session.pop("user", None)
     flash("You have been logged out. Have a good day!", "success")
     return redirect(url_for("views.login"))
+
+
+
+
+
+
+# Trades
+@views.route('/trades', methods=['GET', 'POST'])
+def trades():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    if request.method == "POST":
+        
+        player_1_id = request.form.get("player_1_id")
+        player_2_id = request.form.get("player_2_id")
+        trade_date = request.form.get("trade_date")
+
+        if not player_1_id or not player_2_id:
+            flash("Both players must be selected for a trade.", "error")
+            return redirect(url_for("views.trades"))
+
+        #-----------------------------
+        new_trade = Trade(
+            Player1_ID=player_1_id,
+            Player2_ID=player_2_id,
+            TradeDate=trade_date
+        )
+        db.session.add(new_trade)
+        db.session.commit()
+        flash("Trade added successfully!", "success")
+        return redirect(url_for("views.trades"))
+
+    # Get all trades for display
+    trades = Trade.query.all()
+    return render_template("trades.html", trades=trades)
+
+
+
+@views.route("/trades/delete/<int:id>", methods=["POST"])
+def delete_trade(id):
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    trade = Trade.query.get_or_404(id)  
+    db.session.delete(trade)  
+    db.session.commit()  
+
+    flash("Trade deleted successfully!", "success")
+    return redirect(url_for("views.trades"))
 
 
 

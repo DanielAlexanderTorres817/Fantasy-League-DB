@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matches</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h2 {
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-group button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .table-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-section h2 {
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th,
+        table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .search-bar input {
+            padding: 8px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-bar button {
+            padding: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            margin-left: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span>Welcome, {{ username }}</span>
+        <div>
+            <a href="{{ url_for('views.dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('views.teams') }}">Teams</a>
+            <a href="{{ url_for('views.league') }}">Leagues</a>
+            <a href="{{ url_for('views.players') }}">Players</a>
+            <a href="{{ url_for('views.matches') }}">Matches</a>
+            <a href="{{ url_for('views.logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="form-section">
+            <h2>Add New Match</h2>
+            <form action="{{ url_for('views.matches') }}" method="POST">
+                <div class="form-group">
+                    <label for="match_date">Match Date</label>
+                    <input type="date" id="match_date" name="match_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="team1_id">Team 1 ID</label>
+                    <input type="text" id="team1_id" name="team1_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="team2_id">Team 2 ID</label>
+                    <input type="text" id="team2_id" name="team2_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="score1">Team 1 Score</label>
+                    <input type="number" id="score1" name="score1" required>
+                </div>
+                <div class="form-group">
+                    <label for="score2">Team 2 Score</label>
+                    <input type="number" id="score2" name="score2" required>
+                </div>
+                <button type="submit">Add Match</button>
+            </form>
+        </div>
+
+        <div class="table-section">
+            <h2>Matches</h2>
+            <div class="search-bar">
+                <form method="GET" action="{{ url_for('views.matches') }}">
+                    <input type="text" name="search" placeholder="Search matches..." value="{{ request.args.get('search', '') }}">
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Match ID</th>
+                        <th>Match Date</th>
+                        <th>Team 1 ID</th>
+                        <th>Team 2 ID</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                    <tr>
+                        <td>{{ match.Match_ID }}</td>
+                        <td>{{ match.MatchDate }}</td>
+                        <td>{{ match.Team1_ID }}</td>
+                        <td>{{ match.Team2_ID }}</td>
+                        <td>{{ match.Score }}</td>
+                        <td>
+                            <form action="{{ url_for('views.delete_match', id=match.Match_ID) }}" method="POST" style="display:inline;">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

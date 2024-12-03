@@ -198,3 +198,25 @@ class Draft_Players(db.Model):
     # Relationships
     draft = db.relationship('Draft', backref='draft_players', lazy=True)
     player = db.relationship('Player', backref='draft_players', lazy=True)
+
+
+
+
+class Trade(db.Model):
+    """Trades Table"""
+    __tablename__ = 'Trades'
+
+    # Columns
+    Trade_ID = db.Column(db.Numeric(8, 0), primary_key=True, autoincrement=True)
+    Team1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'), nullable=False)
+    Team2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'), nullable=False)
+    TradedPlayer1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=False)
+    TradedPlayer2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=False)
+    TradeDate = db.Column(db.Date, nullable=False)
+
+    # Relationships
+    team1 = db.relationship('Team', foreign_keys=[Team1_ID], backref='trades_as_team1', lazy=True)
+    team2 = db.relationship('Team', foreign_keys=[Team2_ID], backref='trades_as_team2', lazy=True)
+    traded_player1 = db.relationship('Player', foreign_keys=[TradedPlayer1_ID], backref='trades_as_player1', lazy=True)
+    traded_player2 = db.relationship('Player', foreign_keys=[TradedPlayer2_ID], backref='trades_as_player2', lazy=True)
+
