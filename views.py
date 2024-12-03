@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
-from models import User, League, Team, Player, db
+from models import User, League, Team, Player, db, update_team_ranking
 
 # note: hash does not work for xxamp (password length exceed)
 bcrypt = Bcrypt()
@@ -123,7 +123,6 @@ def teams():
         owner = request.form.get("owner")
         league_id = request.form.get("league_id")
         total_points = request.form.get("points")
-        ranking = request.form.get("ranking")
         status_value = request.form.get("status")
 
         # Convert the checkbox value to 'a' for active or 'i' for inactive
@@ -141,12 +140,11 @@ def teams():
             Owner=owner,
             League_ID=league_id,
             TotalPoints=total_points,
-            Ranking=ranking,
             Status=status,
         )
         db.session.add(new_team)
         db.session.commit()
-        flash("Team added successfully!", "success")
+        update_team_ranking(new_team.Team_ID, total_points)
         return redirect(url_for("views.teams"))
 
     # Search/Filter Teams
@@ -160,6 +158,7 @@ def teams():
 
     return render_template('teams.html', teams=teams)
 
+
 @views.route("/teams/edit", methods=["POST"])
 def edit_team():
     if "user" not in session:
@@ -172,8 +171,7 @@ def edit_team():
     owner = request.form.get("owner")
     league_id = request.form.get("league_id")
     total_points = request.form.get("points")
-    ranking = request.form.get("ranking")
-    status_value = request.form.get("status")  # Expect either 'A' or 'I'
+    status_value = request.form.get("status")  # Expect either 'A' or 'I' (check or not)
 
     if status_value == 'A':
         status = 'A'
@@ -185,13 +183,12 @@ def edit_team():
     team.Owner = owner
     team.League_ID = league_id
     team.TotalPoints = total_points
-    team.Ranking = ranking
     team.Status = status
 
     db.session.commit()
+    update_team_ranking(team_id, total_points)
     flash("Team updated successfully!", "success")
     return redirect(url_for("views.teams"))
-
 
 
 @views.route("/teams/delete/<int:id>", methods=["POST"])
@@ -203,6 +200,13 @@ def delete_team(id):
     team = Team.query.get_or_404(id)
     db.session.delete(team)
     db.session.commit()
+
+    # Update rankings for remaining teams
+    teams = Team.query.order_by(Team.TotalPoints.desc()).all()
+    for rank, team in enumerate(teams, start=1):
+        team.Ranking = rank
+    db.session.commit()
+
     flash("Team deleted successfully!", "success")
     return redirect(url_for("views.teams"))
 

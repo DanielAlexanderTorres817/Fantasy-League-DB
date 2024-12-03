@@ -33,7 +33,6 @@
             <input type="text" name="owner" placeholder="Owner">
             <input type="text" name="league_id" placeholder="League ID">
             <input type="number" name="points" placeholder="Points">
-            <input type="number" name="ranking" placeholder="Ranking">
             <label for="status">Status</label>
             <input type="checkbox" name="status"> Active
             <button type="submit">Add Team</button>
@@ -99,9 +98,6 @@
 
                             <label for="points_{{ team.Team_ID }}">Points:</label>
                             <input type="number" id="points_{{ team.Team_ID }}" name="points" value="{{ team.TotalPoints }}" required>
-
-                            <label for="ranking_{{ team.Team_ID }}">Ranking:</label>
-                            <input type="number" id="ranking_{{ team.Team_ID }}" name="ranking" value="{{ team.Ranking }}" required>
 
                             <label for="status_A_{{ team.Team_ID }}">Active:</label>
                             <input type="radio" id="status_A_{{ team.Team_ID }}" name="status" value="A" {% if team.Status == 'A' %}checked{% endif %} />

@@ -82,6 +82,22 @@ class Team(db.Model):
         db.CheckConstraint("Status IN ('A', 'I')"),
     )
 
+    @staticmethod
+    def update_rankings():
+        """Update the rankings for all teams based on TotalPoints."""
+        teams = Team.query.order_by(Team.TotalPoints.desc()).all()
+        for rank, team in enumerate(teams, start=1):
+            team.Ranking = rank
+        db.session.commit()
+
+
+def update_team_ranking(team_id, new_points):
+    team = Team.query.get(team_id)
+    if team:
+        team.TotalPoints = new_points
+        db.session.commit()
+        Team.update_rankings()
+
 
 # Player model
 class Player(db.Model):
