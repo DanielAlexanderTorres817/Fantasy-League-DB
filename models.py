@@ -9,7 +9,7 @@ def generate_unique_user_id():
     """Generate a unique 8-digit numeric ID."""
     while True:
         new_id = random.randint(10000000, 99999999)
-        if not User.query.filter_by(id=new_id).first():  # Check if it's unique
+        if not User.query.filter_by(User_ID=new_id).first():  # Check if it's unique
             return new_id
 
 
@@ -54,12 +54,13 @@ class User(db.Model):
 
     # for xxamp, note: change User.id to User.User_ID in League and Team
     __tablename__ = 'Users'
-    id = db.Column('User_ID', db.Numeric(8, 0), primary_key=True, default=generate_unique_user_id)
+    User_ID = db.Column('User_ID', db.Numeric(8, 0), primary_key=True, default=generate_unique_user_id)
     name = db.Column('FullName', db.String(50))
     email = db.Column('Email', db.String(50), nullable=False, unique=True)
     username = db.Column('Username', db.String(20), nullable=False, unique=True)
     password = db.Column('Password', db.String(64), nullable=False)  # Should be hashed/encrypted
     profile_settings = db.Column('ProfileSettings', db.Text)
+    role = db.Column('Role', db.String(10), default='USER')
 
 
 # League model

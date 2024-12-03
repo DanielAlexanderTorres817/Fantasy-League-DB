@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
+
 from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players
+
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking
+from functools import wraps
+
 
 bcrypt = Bcrypt()
 
@@ -387,7 +392,7 @@ def players():
         return redirect(url_for('views.players'))
 
     # Get the teams of the logged-in user to display in the form
-    user_teams = Team.query.filter_by(Owner=owner.id).all()
+    user_teams = Team.query.filter_by(Owner=owner.User_ID).all()
 
     search_query = request.args.get('search', '')
 
@@ -521,4 +526,16 @@ def logout():
     return redirect(url_for("views.login"))
 
 
+
+def roles_required(*roles):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user_role = session.get('user_role')
+            if user_role not in roles:
+                flash("Access denied. Insufficient privileges.", "error")
+                return redirect(url_for('views.dashboard'))
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
