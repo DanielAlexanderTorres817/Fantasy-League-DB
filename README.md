@@ -1,6 +1,6 @@
 # Fantasy-League-DB
 
-Just gonna leave instructions on how to access everything in case y'all haven't worked with flask before, its copied from chatgpt (lmao) so if you have any questions just ask in the groupchat and ill help out if I can!
+
 ---
 
 ## Prerequisites
