@@ -3,7 +3,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 from models import User, League, Team, Player, db, update_team_ranking
 
-# note: hash does not work for xxamp (password length exceed)
 bcrypt = Bcrypt()
 
 views =Blueprint(__name__, "views")
@@ -117,10 +116,11 @@ def teams():
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
 
+    owner = User.query.filter_by(username=session["user"]).first()
+
     # Handle adding a new team
     if request.method == "POST":
         team_name = request.form.get("team_name")
-        owner = request.form.get("owner")
         league_id = request.form.get("league_id")
         total_points = request.form.get("points")
         status_value = request.form.get("status")
@@ -131,13 +131,13 @@ def teams():
         else:
             status = 'I'
 
-        if not team_name or not owner or not league_id:
-            flash("Team Name, Owner, and League ID are required.", "error")
+        if not team_name or not league_id:
+            flash("Team Name, and League ID are required.", "error")
             return redirect(url_for("views.teams"))
 
         new_team = Team(
             TeamName=team_name,
-            Owner=owner,
+            Owner=owner.id,
             League_ID=league_id,
             TotalPoints=total_points,
             Status=status,
@@ -145,6 +145,7 @@ def teams():
         db.session.add(new_team)
         db.session.commit()
         update_team_ranking(new_team.Team_ID, total_points)
+        flash("Team added successfully!", "success")
         return redirect(url_for("views.teams"))
 
     # Search/Filter Teams
@@ -165,10 +166,18 @@ def edit_team():
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
 
+    owner = User.query.filter_by(username=session["user"]).first()
+
     # Handle editing the team
     team_id = request.form.get("team_id")
+    team = Team.query.get_or_404(team_id)
+
+    # only owner can edit team
+    if team.Owner != owner.id:
+        flash("You do not have permission to edit this team. \n No changes saved.", "error")
+        return redirect(url_for("views.teams"))
+
     team_name = request.form.get("team_name")
-    owner = request.form.get("owner")
     league_id = request.form.get("league_id")
     total_points = request.form.get("points")
     status_value = request.form.get("status")  # Expect either 'A' or 'I' (check or not)
@@ -180,7 +189,7 @@ def edit_team():
 
     team = Team.query.get_or_404(team_id)
     team.TeamName = team_name
-    team.Owner = owner
+    team.Owner = owner.id
     team.League_ID = league_id
     team.TotalPoints = total_points
     team.Status = status
