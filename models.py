@@ -27,6 +27,13 @@ def generate_unique_player_id():
         if not Player.query.filter_by(Player_ID=new_id).first():  # Check if it's unique
             return new_id
 
+def generate_unique_player_stat_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not PlayerStatistics.query.filter_by(Statistic_ID=new_id).first():  # Check if it's unique
+            return new_id
+
 
 class User(db.Model):
     """Users Table"""
@@ -128,4 +135,25 @@ class Player(db.Model):
     __table_args__ = (
         db.CheckConstraint("Sport IN ('FTB', 'BB', 'SB')"),
         db.CheckConstraint("AvailabilityStatus IN ('A', 'U')"),
+    )
+
+
+class PlayerStatistics(db.Model):
+    """Player Statistics Table"""
+    __tablename__ = 'PlayerStatistics'
+
+    # Columns
+    Statistic_ID = db.Column(db.Numeric(10, 0), primary_key=True, autoincrement=True,
+                             default=generate_unique_player_stat_id)
+    Player_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=False)
+    GameDate = db.Column(db.Date, nullable=False)
+    PerformanceStatistics = db.Column(db.Text, nullable=True)
+    InjuryStatus = db.Column(db.String(1), default='N', nullable=False)
+
+    # Relationships
+    player = db.relationship('Player', backref='player_statistics', lazy=True)
+
+    # Constraints
+    __table_args__ = (
+        db.CheckConstraint("InjuryStatus IN ('Y', 'N')"),
     )

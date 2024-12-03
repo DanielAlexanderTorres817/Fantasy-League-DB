@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
-from models import User, League, Team, Player, db, update_team_ranking
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking
 
 bcrypt = Bcrypt()
 
@@ -422,6 +422,23 @@ def delete_player(id):
         flash('Player not found.', 'error')
 
     return redirect(url_for('views.players'))
+
+
+@views.route("/player_stats")
+def player_stats():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    search_query = request.args.get("search", "")
+    if search_query:
+        stats = PlayerStatistics.query.join(Player).filter(
+            Player.FullName.ilike(f"%{search_query}%")
+        ).all()
+    else:
+        stats = PlayerStatistics.query.all()
+
+    return render_template("player_stats.html", stats=stats, search_query=search_query)
 
 
 #logout

@@ -39,10 +39,8 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Add Player Button -->
     <button type="button" onclick="showAddForm()">Add Player</button>
 
-    <!-- Add Player Form -->
     <div id="add-form" class="add-form">
         <form method="POST" action="{{ url_for('views.players') }}">
             <!-- Form fields for player details -->
@@ -167,6 +165,8 @@
             document.getElementById('add-form').style.display = 'none';
         }
     </script>
+
+    <button type="button" onclick="window.location.href='{{ url_for('views.player_stats') }}'">View Player Stats</button>
 
 </body>
 </html>
