@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 
-from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players, Trade, Match, update_match_status, MatchEvent
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players, Trade, Match, update_match_status, MatchEvent, Waiver
 from functools import wraps
 
 
@@ -505,11 +505,17 @@ def drafts():
     else:
         drafts = Draft.query.all()
 
-    return render_template("drafts.html", drafts=drafts, search_query=search_query)
+    drafts_with_players = []
+    for draft in drafts:
+        players = [dp.player for dp in draft.draft_players]
+        print(f"Draft ID: {draft.Draft_ID}, Players: {[p.FullName for p in players]}")
+        drafts_with_players.append({"draft": draft, "players": players})
+
+    return render_template("drafts.html", drafts=drafts_with_players, search_query=search_query)
 
 
 # Route to handle getting players in a draft
-@views.route('/drafts/players', methods=['GET'])
+@views.route('/drafts/players', methods=['POST'])
 def draft_player():
     draft_id = request.form.get('draft_id')  # Get draft_id from the form
 
@@ -523,7 +529,7 @@ def draft_player():
         flash('Draft not found!', 'danger')
         return redirect(url_for('views.drafts'))
 
-    return render_template('draft_players.html', players=players)
+    return render_template('drafts.html', players=players)
 
 
 #logout
@@ -687,7 +693,7 @@ def edit_match():
     return redirect(url_for("views.matches"))
 
 
-@views.route('/matches/delete/<int:id>', methods=['POST'])
+@views.route('/matches/delete/<int:id>', methods=["POST"])
 def delete_match(id):
     if "user" not in session:
         flash("You need to log in to access this page.", "error")
@@ -716,3 +722,58 @@ def roles_required(*roles):
         return wrapper
     return decorator
 
+
+@views.route("/waivers", methods=["GET", "POST"])
+def waivers():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    owner = User.query.filter_by(username=session["user"]).first()
+
+    # Handle adding a new waiver
+    if request.method == "POST":
+        team_id = request.form.get("team_id")
+        team = Team.query.get(team_id)
+        if team is None:
+            flash("This team ID does not exist. \n No changes saved.", "error")
+            return redirect(url_for("views.waivers"))
+        # only owner can add waiver for team
+        if team.Owner != owner.User_ID and owner.username != "ADMIN":
+            flash("You do not have permission to add a waiver for this team. \n No changes saved.", "error")
+            return redirect(url_for("views.waivers"))
+
+        league_id = request.form.get("league_id")
+        waiver_order = request.form.get("waiver_order")
+        status_value = request.form.get("waiver_status")
+
+        # Convert the checkbox value to 'a' for active or 'i' for inactive
+        if status_value == 'on':
+            waiver_status = 'A'
+        else:
+            waiver_status = 'P'
+
+        if not team_id or not league_id:
+            flash("Team ID, and League ID are required.", "error")
+            return redirect(url_for("views.waivers"))
+
+        new_waiver = Waiver(
+            Team_ID=team_id,
+            League_ID=league_id,
+            WaiverOrder=waiver_order,
+            WaiverStatus = waiver_status,
+        )
+        db.session.add(new_waiver)
+        db.session.commit()
+        flash("Waiver added successfully!", "success")
+        return redirect(url_for("views.waivers"))
+
+    search_query = request.args.get("search", "")
+    if search_query:
+        waivers = Waiver.query.join(Player).filter(
+            Player.FullName.ilike(f"%{search_query}%")
+        ).all()
+    else:
+        waivers = Waiver.query.all()
+
+    return render_template("waivers.html", waivers=waivers, search_query=search_query)

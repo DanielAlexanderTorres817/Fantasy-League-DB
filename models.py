@@ -41,6 +41,13 @@ def generate_unique_draft_id():
         if not Draft.query.filter_by(Draft_ID=new_id).first():  # Check if it's unique
             return new_id
 
+def generate_unique_waiver_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not Waiver.query.filter_by(Waiver_ID=new_id).first():  # Check if it's unique
+            return new_id
+
 
 class User(db.Model):
     """Users Table"""
@@ -267,3 +274,24 @@ def update_match_status(match_id, score_team1, score_team2):
         match.ScoreTeam2 = score_team2
         match.Status = 'C'  # Mark as Completed
         db.session.commit()
+
+class Waiver(db.Model):
+    """Waivers Table"""
+    __tablename__ = 'Waivers'
+
+    Waiver_ID = db.Column(db.Numeric(8, 0), primary_key=True, nullable=False, autoincrement=True,
+                             default=generate_unique_waiver_id)
+    Team_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'), nullable=False)
+    Player_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=False)
+    WaiverOrder = db.Column(db.Numeric(3, 0), nullable=True)
+    WaiverStatus = db.Column(db.String(1), default='P', nullable=False)  # P: Pending, A: Approved
+    WaiverPickupDate = db.Column(db.Date, nullable=True)
+
+    # Relationships
+    team = db.relationship("Team", foreign_keys=[Team_ID], backref="waivers_for_team")
+    player = db.relationship("Player", foreign_keys=[Player_ID], backref="waivers_for_player")
+
+    # Constraints
+    __table_args__ = (
+        db.CheckConstraint("WaiverStatus IN ('P', 'A')"),
+    )
