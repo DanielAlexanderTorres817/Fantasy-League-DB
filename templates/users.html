@@ -88,7 +88,7 @@
 
         <form action="{{ url_for('views.edit_user') }}" method="POST">
 
-            <input type="hidden" name="user_id" value="{{ user.id }}">
+            <input type="hidden" name="user_id" value="{{ user.User_ID }}">
 
             <label for="name">Full Name</label>
             <input type="text" id="name" name="full_name" class="profile-field" value="{{ user.name }}" required>
