@@ -20,6 +20,13 @@ def generate_unique_team_id():
         if not Team.query.filter_by(Team_ID=new_id).first():  # Check if it's unique
             return new_id
 
+def generate_unique_player_id():
+    """Generate a unique 8-digit numeric ID."""
+    while True:
+        new_id = random.randint(10000000, 99999999)
+        if not Player.query.filter_by(Player_ID=new_id).first():  # Check if it's unique
+            return new_id
+
 
 class User(db.Model):
     """Users Table"""
@@ -105,7 +112,7 @@ class Player(db.Model):
     __tablename__ = 'Players'
 
     # Columns
-    Player_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Player_ID = db.Column(db.Numeric(8, 0), primary_key=True, default=generate_unique_player_id)
     Team_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
     FullName = db.Column(db.String(50), nullable=False)
     Sport = db.Column(db.String(3), nullable=False)
