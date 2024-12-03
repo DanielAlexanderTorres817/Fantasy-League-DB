@@ -494,11 +494,17 @@ def drafts():
     else:
         drafts = Draft.query.all()
 
-    return render_template("drafts.html", drafts=drafts, search_query=search_query)
+    drafts_with_players = []
+    for draft in drafts:
+        players = [dp.player for dp in draft.draft_players]
+        print(f"Draft ID: {draft.Draft_ID}, Players: {[p.FullName for p in players]}")
+        drafts_with_players.append({"draft": draft, "players": players})
+
+    return render_template("drafts.html", drafts=drafts_with_players, search_query=search_query)
 
 
 # Route to handle getting players in a draft
-@views.route('/drafts/players', methods=['GET'])
+@views.route('/drafts/players', methods=['POST'])
 def draft_player():
     draft_id = request.form.get('draft_id')  # Get draft_id from the form
 
@@ -512,7 +518,7 @@ def draft_player():
         flash('Draft not found!', 'danger')
         return redirect(url_for('views.drafts'))
 
-    return render_template('draft_players.html', players=players)
+    return render_template('drafts.html', players=players)
 
 
 #logout

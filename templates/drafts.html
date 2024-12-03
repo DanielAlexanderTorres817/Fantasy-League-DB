@@ -51,62 +51,61 @@
                 <th>Draft Date</th>
                 <th>Draft Order</th>
                 <th>Draft Status</th>
+                <th>Player</th>
             </tr>
         </thead>
         <tbody>
-            {% for draft in drafts %}
-            <tr>
-                <td>{{ draft.Draft_ID }}</td>
-                <td>{{ draft.league.LeagueName }}</td>
-                <td>{{ draft.DraftDate }}</td>
-                <td>
-                    {% if draft.DraftOrder == 'R' %}
-                        Round-Robin
-                    {% else %}
-                        Snake
-                    {% endif %}
-                </td>
-                <td>
-                    {% if draft.DraftStatus == 'C' %}
-                        Completed
-                    {% else %}
-                        In Progress
-                    {% endif %}
-                </td>
-                <td>
-                    <button type="button" onclick="showPlayerForm('{{ draft.Draft_ID }}')">Show Players</button>
-                </td>
-
-                <tr id="player-form-{{ draft.Draft_ID }}" class="edit-form">
-                    {% for player in players %}
-                    <td colspan="8">
-                        <form method="GET" action="/drafts/players">
-                            <input type="hidden" name="draft_id" value="{{ draft.Draft_ID }}">
-                            <input type="text" id="draftPlayers_{{ draft.Draft_ID }}" name="draft_player_list" value="{{ player.FullName }}">
-                            <button type="button" onclick="hidePlayerForm('{{ draft.Draft_ID }}')">Close</button>
-                        </form>
+            {% for item in drafts %}
+                {% set draft = item.draft %}
+                <tr>
+                    <td>{{ draft.Draft_ID }}</td>
+                    <td>{{ draft.league.LeagueName }}</td>
+                    <td>{{ draft.DraftDate }}</td>
+                    <td>{{ 'Round-Robin' if draft.DraftOrder == 'R' else 'Snake' }}</td>
+                    <td>{{ 'Completed' if draft.DraftStatus == 'C' else 'In Progress' }}</td>
+                    <td>
+                        <button onclick="showPlayerForm({{ draft.Draft_ID }})">Show Players</button>
                     </td>
-                    {% else %}
-                        <td colspan="5" style="text-align:center;">No draft players found</td>
-                    {% endfor %}
                 </tr>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" style="text-align:center;">No drafts found</td>
-            </tr>
+                <tr id="player-form-{{ draft.Draft_ID }}" class="edit-form" style="display:none;">
+                    <td colspan="6">
+                        {% if item.players %}
+                            <ul>
+                                {% for player in item.players %}
+                                    <p>{{ player.FullName }}</p>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No players found for this draft.</p>
+                        {% endif %}
+                        <button onclick="hidePlayerForm({{ draft.Draft_ID }})">Hide Players</button>
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <script>
-        function showPlayerForm(draftID) {
-            document.getElementById(`player-form-${draftId}`).style.display = 'block';
+<script>
+    function showPlayerForm(draftID) {
+        const row = document.getElementById(`player-form-${draftID}`);
+        if (row) {
+            row.style.display = "table-row";
         }
-        function hidePlayerForm(draftId) {
-            document.getElementById(`player-form-${draftId}`).style.display = 'none';
-        }
-    </script>
+    }
 
+    function hidePlayerForm(draftID) {
+        const row = document.getElementById(`player-form-${draftID}`);
+        if (row) {
+            row.style.display = "none";
+        }
+    }
+</script>
+<script>
+    // Redirect to the Players page with a search query
+    function goToPlayersPage(playerName) {
+        const encodedName = encodeURIComponent(playerName);
+        window.location.href = `/players?search=${encodedName}`;
+    }
+</script>
 </body>
 </html>
