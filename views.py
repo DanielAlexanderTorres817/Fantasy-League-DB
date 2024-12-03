@@ -220,6 +220,118 @@ def delete_team(id):
     return redirect(url_for("views.teams"))
 
 
+@views.route('/players', methods=['GET', 'POST'])
+def players():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    owner = User.query.filter_by(username=session["user"]).first()
+
+    if request.method == 'POST':
+        # Handle adding a new player
+        full_name = request.form['full_name']
+        sport = request.form['sport']
+        position = request.form.get('position', '')
+        real_team = request.form.get('real_team', '')
+        fantasy_points = request.form['fantasy_points']
+        availability_status = 'A' if 'status' in request.form else 'U'
+        team_id = request.form['team_id']
+
+        team = Team.query.filter_by(Team_ID=team_id).first()
+        if not team:
+            flash("The selected team does not exist.", "error")
+            return redirect(url_for('views.players'))
+        real_team = team.TeamName
+
+        new_player = Player(
+            FullName=full_name,
+            Sport=sport,
+            Position=position,
+            RealTeam=real_team,
+            FantasyPoints=fantasy_points,
+            AvailabilityStatus=availability_status,
+            Team_ID=team_id  # Associate player with the team
+        )
+        db.session.add(new_player)
+        db.session.commit()
+
+        flash('Player added successfully!', 'success')
+        return redirect(url_for('views.players'))
+
+    # Get the teams of the logged-in user to display in the form
+    user_teams = Team.query.filter_by(Owner=owner.id).all()
+
+    search_query = request.args.get('search', '')
+
+    if search_query:
+        players = db.session.query(Player).filter(Player.FullName.like(f'%{search_query}%')).all()
+    else:
+        players = db.session.query(Player).all()
+
+    return render_template('players.html', players=players, user_teams=user_teams)
+
+
+# Route to handle editing a player's details
+@views.route('/players/edit', methods=['GET', 'POST'])
+def edit_player():
+    player_id = request.form.get('player_id')  # Get player_id from the form
+
+    if player_id:
+        player = Player.query.get_or_404(player_id)
+
+        owner = User.query.filter_by(username=session["user"]).first()
+        owned_teams = Team.query.filter_by(Owner=owner.id).all()
+
+        # Check if the player's team is one that the user owns
+        if player.Team_ID not in [team.Team_ID for team in owned_teams]:
+            flash("You are not authorized to edit this player's information.", 'danger')
+            return redirect(url_for('views.players'))
+
+        if request.method == 'POST':
+            full_name = request.form['full_name']
+            sport = request.form['sport']
+            position = request.form.get('position', '')
+            fantasy_points = request.form['fantasy_points']
+            availability_status = 'A' if 'status' in request.form else 'U'
+            team_id = request.form['team_id']
+
+            team = Team.query.filter_by(Team_ID=team_id).first()
+            real_team = team.TeamName
+
+            player.FullName = full_name
+            player.Sport = sport
+            player.Position = position
+            player.FantasyPoints = fantasy_points
+            player.AvailabilityStatus = availability_status
+            player.RealTeam = real_team
+            player.Team_ID = team_id
+
+            db.session.commit()
+
+            flash('Player updated successfully!', 'success')
+            return redirect(url_for('views.players'))
+    else:
+        flash('Player not found!', 'danger')
+        return redirect(url_for('views.players'))
+
+    return render_template('edit_player.html', player=player, owned_teams=owned_teams)
+
+
+# Route to handle deleting a player
+@views.route('/players/delete/<int:id>', methods=['POST'])
+def delete_player(id):
+    player = db.session.query(Player).filter(Player.Player_ID == id).first()
+    if player:
+        db.session.delete(player)
+        db.session.commit()
+        flash('Player deleted successfully!', 'success')
+    else:
+        flash('Player not found.', 'error')
+
+    return redirect(url_for('views.players'))
+
+
 #logout
 @views.route("/logout")
 def logout():

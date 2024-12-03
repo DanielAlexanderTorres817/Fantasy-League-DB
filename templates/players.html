@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Players</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0; padding: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin-top: 5px; width: calc(100% - 20px); border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .edit-form, .add-form { display: none; background: #f4f4f4; padding: 15px; margin-top: 10px; border: 1px solid #ddd; }
+        .flash-messages {color: red; font-size: 14px; margin-bottom: 20px; }
+        .flash-messages.success { color: green; }
+        .flash-messages ul { list-style-type: none; padding: 0; }
+        .flash-messages li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Players</h2>
+
+    <!-- Flash Message Section -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add Player Button -->
+    <button type="button" onclick="showAddForm()">Add Player</button>
+
+    <!-- Add Player Form -->
+    <div id="add-form" class="add-form">
+        <form method="POST" action="{{ url_for('views.players') }}">
+            <!-- Form fields for player details -->
+            <input type="text" name="full_name" placeholder="Full Name" required>
+            <input type="text" name="sport" placeholder="Sport" required>
+            <input type="text" name="position" placeholder="Position">
+            <input type="number" step="0.01" name="fantasy_points" placeholder="Fantasy Points" required>
+            <label for="status">Status</label>
+            <input type="checkbox" name="status"> Availible
+            <label for="team_id">Select Team:</label>
+            <select name="team_id" id="team_id" required>
+                {% for team in user_teams %}
+                    <option value="{{ team.Team_ID }}">{{ team.TeamName }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Add Player</button>
+        </form>
+    </div>
+
+    <form method="GET" action="/players">
+        <input type="text" name="search" placeholder="Search by player name" value="{{ request.args.get('search', '') }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Team ID</th>
+                <th>Full Name</th>
+                <th>Sport</th>
+                <th>Position</th>
+                <th>Real Team</th>
+                <th>Fantasy Points</th>
+                <th>Status</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td>{{ player.Player_ID }}</td>
+                <td>{{ player.Team_ID }}</td>
+                <td>{{ player.FullName }}</td>
+                <td>{{ player.Sport }}</td>
+                <td>{{ player.Position }}</td>
+                <td>{{ player.RealTeam }}</td>
+                <td>{{ player.FantasyPoints }}</td>
+                <td>
+                    {% if player.AvailabilityStatus == 'A' %}
+                        Available
+                    {% else %}
+                        Unavailable
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" onclick="showEditForm('{{ player.Player_ID }}')">Edit</button>
+                </td>
+                <td>
+                    <form action="{{ url_for('views.delete_player', id=player.Player_ID) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+
+                <tr id="edit-form-{{ player.Player_ID }}" class="edit-form">
+                    <td colspan="9">
+                        <form method="POST" action="/players/edit">
+                            <input type="hidden" name="player_id" value="{{ player.Player_ID }}">
+                            <label for="full_name_{{ player.Player_ID }}">Full Name:</label>
+                            <input type="text" id="full_name_{{ player.Player_ID }}" name="full_name" value="{{ player.FullName }}" required>
+
+                            <label for="sport_{{ player.Player_ID }}">Sport:</label>
+                            <input type="text" id="sport_{{ player.Player_ID }}" name="sport" value="{{ player.Sport }}" required>
+
+                            <label for="position_{{ player.Player_ID }}">Position:</label>
+                            <input type="text" id="position_{{ player.Player_ID }}" name="position" value="{{ player.Position }}">
+
+                            <label for="fantasy_points_{{ player.Player_ID }}">Fantasy Points:</label>
+                            <input type="number" step="0.01" id="fantasy_points_{{ player.Player_ID }}" name="fantasy_points" value="{{ player.FantasyPoints }}" required>
+
+                            <label for="status_A_{{ player.Player_ID }}">Available:</label>
+                            <input type="radio" id="status_A_{{ player.Player_ID }}" name="status" value="A" {% if player.AvailabilityStatus == 'A' %}checked{% endif %} />
+                            <label for="status_I_{{ player.Player_ID }}">Unavailable:</label>
+                            <input type="radio" id="status_I_{{ player.Player_ID }}" name="status" value="U" {% if player.AvailabilityStatus == 'U' %}checked{% endif %} /
+
+                            <label for="team_id">Select Team</label>
+                            <select name="team_id" id="team_id" required>
+                                {% for team in user_teams %}
+                                    <option value="{{ team.Team_ID }}">{{ team.TeamName }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <button type="submit">Save</button>
+                            <button type="button" onclick="hideEditForm('{{ player.Player_ID }}')">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" style="text-align:center;">No players found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function showEditForm(playerId) {
+            document.getElementById(`edit-form-${playerId}`).style.display = 'table-row';
+        }
+        function hideEditForm(playerId) {
+            document.getElementById(`edit-form-${playerId}`).style.display = 'none';
+        }
+
+        // Show Add Player form
+        function showAddForm() {
+            document.getElementById('add-form').style.display = 'block';
+        }
+
+        // Hide Add Player form
+        function hideAddForm() {
+            document.getElementById('add-form').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
