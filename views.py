@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 
-from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players, Trade
+from models import User, League, Team, Player, PlayerStatistics, db, update_team_ranking, Draft, Draft_Players, Trade, Match, update_match_status, MatchEvent
 from functools import wraps
 
 
@@ -14,7 +14,6 @@ views =Blueprint(__name__, "views")
 @views.route("/")
 def landing():
     return render_template("landing.html")
-
 
 #login
 @views.route("/login", methods = ["GET", "POST"])
@@ -535,30 +534,52 @@ def trades():
         flash("You need to log in to access this page.", "error")
         return redirect(url_for("views.login"))
 
-    if request.method == "POST":
-        
-        player_1_id = request.form.get("player_1_id")
-        player_2_id = request.form.get("player_2_id")
-        trade_date = request.form.get("trade_date")
+    if request.method == 'POST':
+        # Get form data
+        team1_id = request.form.get('team1_id')
+        team2_id = request.form.get('team2_id')
+        player1_id = request.form.get('player1_id')
+        player2_id = request.form.get('player2_id')
+        trade_date = request.form.get('trade_date')
 
-        if not player_1_id or not player_2_id:
-            flash("Both players must be selected for a trade.", "error")
-            return redirect(url_for("views.trades"))
+        # Validate input
+        if not all([team1_id, team2_id, player1_id, player2_id, trade_date]):
+            flash("All fields are required.", "error")
+            return redirect(url_for('views.trades'))
 
-        #-----------------------------
+        # Ensure the teams and players exist
+        team1 = Team.query.filter_by(Team_ID=team1_id).first()
+        team2 = Team.query.filter_by(Team_ID=team2_id).first()
+        player1 = Player.query.filter_by(Player_ID=player1_id).first()
+        player2 = Player.query.filter_by(Player_ID=player2_id).first()
+
+        if not team1 or not team2 or not player1 or not player2:
+            flash("Invalid Team or Player IDs.", "error")
+            return redirect(url_for('views.trades'))
+
+        # Create and save the new trade
         new_trade = Trade(
-            Player1_ID=player_1_id,
-            Player2_ID=player_2_id,
+            Team1_ID=team1_id,
+            Team2_ID=team2_id,
+            TradedPlayer1_ID=player1_id,
+            TradedPlayer2_ID=player2_id,
             TradeDate=trade_date
         )
         db.session.add(new_trade)
         db.session.commit()
-        flash("Trade added successfully!", "success")
-        return redirect(url_for("views.trades"))
 
-    # Get all trades for display
-    trades = Trade.query.all()
-    return render_template("trades.html", trades=trades)
+        flash("Trade added successfully!", "success")
+        return redirect(url_for('views.trades'))
+
+    # Handle search
+    search_query = request.args.get('search', '').strip()
+    if search_query:
+        trades = Trade.query.filter(Trade.Trade_ID.like(f"%{search_query}%")).all()
+    else:
+        trades = Trade.query.all()
+
+    return render_template('trades.html', trades=trades)
+
 
 
 
@@ -574,6 +595,101 @@ def delete_trade(id):
 
     flash("Trade deleted successfully!", "success")
     return redirect(url_for("views.trades"))
+
+
+# Matches
+@views.route('/matches', methods=['GET', 'POST'])
+def matches():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    if request.method == 'POST':
+       
+        team1_id = request.form.get('team1_id')
+        team2_id = request.form.get('team2_id')
+        match_date = request.form.get('match_date')
+        score_team1 = request.form.get('score_team1', 0)
+        score_team2 = request.form.get('score_team2', 0)
+        status = request.form.get('status', 'P')
+
+       
+        if not all([team1_id, team2_id, match_date]):
+            flash("All fields are required.", "error")
+            return redirect(url_for('views.matches'))
+
+        
+        team1 = Team.query.filter_by(Team_ID=team1_id).first()
+        team2 = Team.query.filter_by(Team_ID=team2_id).first()
+
+        if not team1 or not team2:
+            flash("Invalid Team IDs.", "error")
+            return redirect(url_for('views.matches'))
+
+        
+        new_match = Match(
+            Team1_ID=team1_id,
+            Team2_ID=team2_id,
+            MatchDate=match_date,
+            ScoreTeam1=score_team1,
+            ScoreTeam2=score_team2,
+            Status=status
+        )
+        db.session.add(new_match)
+        db.session.commit()
+
+        flash("Match added successfully!", "success")
+        return redirect(url_for('views.matches'))
+
+    # Handle search
+    search_query = request.args.get('search', '').strip()
+    if search_query:
+        matches = Match.query.filter(Match.Match_ID.like(f"%{search_query}%")).all()
+    else:
+        matches = Match.query.all()
+
+    return render_template('matches.html', matches=matches)
+
+
+
+@views.route('/matches/edit', methods=['POST'])
+def edit_match():
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    match_id = request.form.get("match_id")
+    match = Match.query.get_or_404(match_id)
+
+    match_date = request.form.get("match_date")
+    score_team1 = request.form.get("score_team1")
+    score_team2 = request.form.get("score_team2")
+
+    # Update match details
+    match.MatchDate = match_date
+    match.ScoreTeam1 = score_team1
+    match.ScoreTeam2 = score_team2
+    match.Status = 'C' if score_team1 is not None and score_team2 is not None else 'S'
+
+    db.session.commit()
+    flash("Match updated successfully!", "success")
+    return redirect(url_for("views.matches"))
+
+
+@views.route('/matches/delete/<int:id>', methods=['POST'])
+def delete_match(id):
+    if "user" not in session:
+        flash("You need to log in to access this page.", "error")
+        return redirect(url_for("views.login"))
+
+    match = Match.query.get_or_404(id)
+    db.session.delete(match)
+    db.session.commit()
+
+    flash("Match deleted successfully!", "success")
+    return redirect(url_for("views.matches"))
+
+
 
 
 

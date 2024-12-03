@@ -12,25 +12,6 @@
             padding: 0;
         }
 
-        .navbar {
-            background-color: #343a40;
-            color: white;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 10px 20px;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-        }
-
-        .navbar a:hover {
-            text-decoration: underline;
-        }
-
         .content {
             padding: 20px;
         }
@@ -148,17 +129,6 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div>
-            <a href="{{ url_for('views.dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('views.teams') }}">Teams</a>
-            <a href="{{ url_for('views.league') }}">Leagues</a>
-            <a href="{{ url_for('views.players') }}">Players</a>
-            <a href="{{ url_for('views.trades') }}">Trades</a>
-            <a href="{{ url_for('views.logout') }}">Logout</a>
-        </div>
-    </div>
-
     <div class="content">
         <div class="form-section">
             <h2>Add New Trade</h2>

@@ -12,25 +12,6 @@
             padding: 0;
         }
 
-        .navbar {
-            background-color: #343a40;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-        }
-
-        .navbar a:hover {
-            text-decoration: underline;
-        }
-
         .content {
             padding: 20px;
         }
@@ -66,7 +47,7 @@
         }
 
         .form-group button {
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -75,7 +56,7 @@
         }
 
         .form-group button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
 
         .table-section {
@@ -102,8 +83,21 @@
         }
 
         table th {
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
+        }
+
+        table td button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        table td button:hover {
+            background-color: #218838;
         }
 
         .search-bar {
@@ -121,7 +115,7 @@
 
         .search-bar button {
             padding: 8px;
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             margin-left: 5px;
@@ -130,23 +124,11 @@
         }
 
         .search-bar button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <span>Welcome, {{ username }}</span>
-        <div>
-            <a href="{{ url_for('views.dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('views.teams') }}">Teams</a>
-            <a href="{{ url_for('views.league') }}">Leagues</a>
-            <a href="{{ url_for('views.players') }}">Players</a>
-            <a href="{{ url_for('views.matches') }}">Matches</a>
-            <a href="{{ url_for('views.logout') }}">Logout</a>
-        </div>
-    </div>
-
     <div class="content">
         <div class="form-section">
             <h2>Add New Match</h2>
@@ -201,7 +183,7 @@
                         <td>{{ match.MatchDate }}</td>
                         <td>{{ match.Team1_ID }}</td>
                         <td>{{ match.Team2_ID }}</td>
-                        <td>{{ match.Score }}</td>
+                        <td>{{ match.FinalScore }}</td>
                         <td>
                             <form action="{{ url_for('views.delete_match', id=match.Match_ID) }}" method="POST" style="display:inline;">
                                 <button type="submit">Delete</button>

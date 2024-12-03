@@ -220,3 +220,50 @@ class Trade(db.Model):
     traded_player1 = db.relationship('Player', foreign_keys=[TradedPlayer1_ID], backref='trades_as_player1', lazy=True)
     traded_player2 = db.relationship('Player', foreign_keys=[TradedPlayer2_ID], backref='trades_as_player2', lazy=True)
 
+
+class Match(db.Model):
+    """Matches Table"""
+    __tablename__ = 'Matches'
+
+    Match_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Team1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
+    Team2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
+    MatchDate = db.Column(db.Date, nullable=False)
+    FinalScore = db.Column(db.String(10))  # Example: "75-68"
+    Winner = db.Column(db.Numeric(8, 0), db.ForeignKey('Teams.Team_ID'))
+
+    # Relationships
+    team1 = db.relationship("Team", foreign_keys=[Team1_ID], backref="matches_as_team1")
+    team2 = db.relationship("Team", foreign_keys=[Team2_ID], backref="matches_as_team2")
+    winning_team = db.relationship("Team", foreign_keys=[Winner], backref="matches_won")
+
+    # Relationship with MatchEvent
+    events = db.relationship("MatchEvent", backref="match", lazy=True)
+
+
+class MatchEvent(db.Model):
+    """Match Events Table"""
+    __tablename__ = 'match_events'
+
+    Match_Event_ID = db.Column(db.Numeric(8, 0), primary_key=True)
+    Match_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Matches.Match_ID'), nullable=False)
+    Player1_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'))
+    Player2_ID = db.Column(db.Numeric(8, 0), db.ForeignKey('Players.Player_ID'), nullable=True)  # Nullable for solo events
+    EventType = db.Column(db.String(1), nullable=False)  # G: Goal, A: Assist, F: Foul
+    EventTime = db.Column(db.Time, nullable=False)  # Time of the event in the match
+    ImpactOnFantasyPoints = db.Column(db.Integer, default=0)
+
+    # Relationships
+    player1 = db.relationship("Player", foreign_keys=[Player1_ID], backref="events_as_player1")
+    player2 = db.relationship("Player", foreign_keys=[Player2_ID], backref="events_as_player2")
+
+
+
+def update_match_status(match_id, score_team1, score_team2):
+    """Update match status and scores."""
+    match = Match.query.get(match_id)
+    if match:
+        match.ScoreTeam1 = score_team1
+        match.ScoreTeam2 = score_team2
+        match.Status = 'C'  # Mark as Completed
+        db.session.commit()
