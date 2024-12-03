@@ -21,9 +21,78 @@
         .flash-messages.success { color: green; }
         .flash-messages ul { list-style-type: none; padding: 0; }
         .flash-messages li { margin-bottom: 10px; }
+        .navbar {
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-sizing: border-box
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .navbar .user-info {
+            font-size: 16px;
+        }
+
+        /* Content area */
+        .content {
+            padding: 20px;
+            text-align: center;
+        }
+        .content h1 {
+            color: #343a40;
+        }
+
+        /* Navigation tabs styling */
+        .tabs {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .tabs a {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .tabs a:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <span class="user-info">Leagues</span>
+        <div>
+            <a href="{{ url_for('views.dashboard') }}">Home</a>
+            <a href="{{ url_for('views.users') }}">Users</a>
+            <a href="{{ url_for('views.teams') }}">Teams</a>
+            <a href="{{ url_for('views.league') }}">League</a>
+            <a href="{{ url_for('views.players') }}">Players</a>
+            <a href="{{ url_for('views.trades') }}">Trades</a>
+            <a href="{{ url_for('views.matches') }}">Matches</a>
+            <a href="{{ url_for('views.logout') }}">Logout</a>
+        </div>
+    </div>
+
     <h2>Leagues</h2>
 
     <!-- Flash Message Section -->
